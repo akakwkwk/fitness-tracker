@@ -166,6 +166,18 @@ public class DietServiceImpl extends ServiceImpl<DietRecordMapper, DietRecord> i
         food.setIsUserCreated(1);
         food.setUserId(userId);
         food.setStatus(1);
+
+        // 归一化为每100g的营养值
+        BigDecimal ss = food.getServingSize() != null ? food.getServingSize() : BigDecimal.valueOf(100);
+        if (ss.compareTo(BigDecimal.ZERO) > 0 && ss.compareTo(BigDecimal.valueOf(100)) != 0) {
+            BigDecimal factor = BigDecimal.valueOf(100).divide(ss, 6, RoundingMode.HALF_UP);
+            if (food.getCalories() != null) food.setCalories(food.getCalories().multiply(factor).setScale(1, RoundingMode.HALF_UP));
+            if (food.getProtein() != null) food.setProtein(food.getProtein().multiply(factor).setScale(1, RoundingMode.HALF_UP));
+            if (food.getCarbs() != null) food.setCarbs(food.getCarbs().multiply(factor).setScale(1, RoundingMode.HALF_UP));
+            if (food.getFat() != null) food.setFat(food.getFat().multiply(factor).setScale(1, RoundingMode.HALF_UP));
+            food.setServingSize(BigDecimal.valueOf(100));
+        }
+
         foodMapper.insert(food);
         return food;
     }
